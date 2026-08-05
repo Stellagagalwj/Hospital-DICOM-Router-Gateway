@@ -42,7 +42,7 @@ graph LR
     %% 存储与云端层
     subgraph Storage & Archive
         DeID -->|Save Sanitized Data| LocalStorage[(📁 Local Volume)]
-        DeID -.->|Future: CI/CD Pipeline| AWS[(☁️ AWS S3)]
+        DeID -->|CI/CD Pipeline| AWS[(☁️ AWS S3)]
     end
 
     %% 自定义样式 (提亮你的核心组件)
@@ -84,9 +84,8 @@ uvicorn main:app --reload
 ## 📖 API Documentation
 Once the server is running, the interactive Swagger UI is automatically available at:
 👉 http://localhost:8000/docs
-
-![Swagger UI](./docs/swagger.png)
-![Swagger UI](./docs/swagger2.png)
+<img src="./docs/swagger.png" width="600" alt="DICOM Router UI">
+<img src="./docs/swagger2.png" width="600" alt="DICOM Router UI">
 
 ## Example API Request (cURL)
 ```bash
@@ -99,9 +98,11 @@ curl -X 'POST' \
 
 ## 🛣️ Future Roadmap (Next Steps)
 To further align with enterprise HealthTech standards, the following features are planned:
-[ ] AWS S3 Integration: Replace local disk storage with AWS S3 buckets utilizing boto3 for scalable cloud archiving.
-[ ] De-identification Pipeline: Implement automated PHI (Protected Health Information) stripping to ensure strict GDPR compliance before routing.
-[ ] CI/CD Pipeline: Set up GitHub Actions for automated linting, pytest execution, and Docker image pushing.
-[ ] Observability: Integrate structured logging and basic metrics tracking.
 
-## Designed and engineered by Weijia Li
+- [ ] **AWS S3 Integration:** Replace local disk storage with AWS S3 buckets utilizing `boto3` for scalable cloud archiving.
+- [ ] **De-identification Pipeline:** Implement automated PHI (Protected Health Information) stripping to ensure strict GDPR compliance before routing.
+- [x] **CI/CD Pipeline & Containerization:** Set up GitHub Actions for automated testing, pytest execution, and Docker image management. *(Completed)*
+- [ ] **Observability:** Integrate structured logging and basic metrics tracking.
+
+---
+**Designed and engineered by Weijia Li**
