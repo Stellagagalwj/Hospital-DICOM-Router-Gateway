@@ -84,8 +84,8 @@ uvicorn main:app --reload
 ## 📖 API Documentation
 Once the server is running, the interactive Swagger UI is automatically available at:
 👉 http://localhost:8000/docs
-<img src="./docs/swagger.png" width="300" alt="DICOM Router UI">
-<img src="./docs/swagger2.png" width="300" alt="DICOM Router UI">
+<img src="./docs/swagger.png" width="400" alt="DICOM Router UI">
+<img src="./docs/swagger2.png" width="400" alt="DICOM Router UI">
 
 ## Example API Request (cURL)
 ```bash
