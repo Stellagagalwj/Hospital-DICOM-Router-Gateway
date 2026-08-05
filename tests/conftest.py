@@ -24,6 +24,8 @@ def make_minimal_dicom(modality: str = "CT", filename: str = "test.dcm") -> byte
     dataset.SOPInstanceUID = file_meta.MediaStorageSOPInstanceUID
     dataset.Modality = modality
     dataset.PatientName = "Test^Patient"
+    dataset.PatientID = "P-99999"
+    dataset.PatientBirthDate = "19900101"
 
     buffer = io.BytesIO()
     dataset.save_as(buffer)

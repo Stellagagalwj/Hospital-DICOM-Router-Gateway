@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import pydicom
 import pytest
 from fastapi.testclient import TestClient
 
@@ -31,7 +32,12 @@ def test_upload_routes_ct_to_modality_folder(client: TestClient, tmp_path: Path)
 
     saved_file = tmp_path / "CT" / "sample_ct.dcm"
     assert saved_file.exists()
-    assert saved_file.read_bytes() == dicom_bytes
+
+    saved_dataset = pydicom.dcmread(saved_file)
+    assert saved_dataset.Modality == "CT"
+    assert saved_dataset.PatientName == ""
+    assert saved_dataset.PatientID == ""
+    assert saved_dataset.PatientBirthDate == ""
 
 
 def test_upload_rejects_invalid_dicom(client: TestClient) -> None:
