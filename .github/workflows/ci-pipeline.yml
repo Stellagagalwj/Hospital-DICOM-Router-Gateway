@@ -1,0 +1,41 @@
+name: DICOM Router CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest # 使用 GitHub 提供的免费 Ubuntu 服务器
+
+    steps:
+    # 1. 把你的代码拉取到 GitHub 服务器上
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    # 2. 安装 Python 环境
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    # 3. 安装项目依赖
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest httpx
+
+    # 4. 运行自动化测试 (Quality Mindset)
+    - name: Run Pytest
+      run: |
+        pytest
+
+    # 5. 试着打包 Docker 镜像，确保 Dockerfile 没写错 (DevOps Skills)
+    - name: Test Docker Build
+      run: |
+        docker build -t dicom-router-test .
