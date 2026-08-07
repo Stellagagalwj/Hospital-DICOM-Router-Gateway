@@ -12,10 +12,10 @@ jobs:
 
     steps:
     # 1. 修复警告：升级到 v4，支持最新的 Node.js
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
@@ -33,3 +33,8 @@ jobs:
         S3_BUCKET_NAME: test-bucket
       run: |
         pytest
+
+    # 5. 试着打包 Docker 镜像，确保 Dockerfile 没写错 (DevOps Skills)
+    - name: Test Docker Build
+      run: |
+        docker build -t dicom-router-test .
