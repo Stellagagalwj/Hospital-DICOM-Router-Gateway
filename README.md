@@ -109,30 +109,34 @@ graph LR
         MRI[🩻 MRI Scanner] -->|POST .dcm| Gateway
     end
 
-    %% 核心网关层
-    subgraph DICOM Router Gateway
+    %% 核心网关层 (Stateless & In-Memory)
+    subgraph DICOM Router Gateway (Stateless)
         Gateway{⚙️ FastAPI Router}
-        Parser[📄 DICOM Header Parser]
-        DeID[🛡️ De-identification Pipeline]
+        MemoryBuf[🧠 In-Memory Buffer]
+        DeID[🛡️ GDPR Redaction & Hash]
+        Logger[📝 Structured Audit Log]
         
-        Gateway -->|Validate Payload| Parser
-        Parser -->|Extract Metadata| DeID
+        Gateway -->|Load Bytes| MemoryBuf
+        MemoryBuf -->|Sanitize PHI| DeID
+        DeID -.->|Record Event| Logger
     end
 
-    %% 存储与云端层
-    subgraph Storage & Archive
-        DeID -->|Save Sanitized Data| LocalStorage[(📁 Local Volume)]
-        DeID -->|CI/CD Pipeline| AWS[(☁️ AWS S3)]
+    %% 云端存储层
+    subgraph Cloud Infrastructure
+        DeID -->|boto3 Stream| AWS[(☁️ AWS S3 Vault)]
     end
 
-    %% 自定义样式 (提亮你的核心组件)
+    %% 自定义样式
     classDef core fill:#e1f5fe,stroke:#0288d1,stroke-width:2px;
-    class Gateway,Parser,DeID core;
+    classDef cloud fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+    class Gateway,MemoryBuf,DeID core;
+    class AWS cloud;
 ```
 
-1.  **Ingress**: Client (e.g., a simulated PACS node) POSTs a `.dcm` file to `/api/router/upload`.
-2.  **Processing**: The FastAPI router validates the payload and reads the DICOM header.
-3.  **Routing**: The system sanitizes the file path and saves the data to the corresponding local or cloud-mounted volume.
+1.  **Ingress**: A client (e.g., a simulated PACS node) POSTs a .dcm file to /api/router/upload.
+2.  **In-Memory Processing**: To ensure maximum I/O throughput and security, the FastAPI router reads the file directly into a memory buffer (io.BytesIO). No sensitive data is ever written to the local disk.
+3.  **GDPR Sanitization**: The de-identification pipeline intercepts the dataset, strips direct identifiers (e.g., PatientName, DOB), and pseudonymizes the PatientID using a cryptographic SHA-256 hash.
+4.  **Cloud Routing & Audit**: The sanitized dataset is streamed directly to an AWS S3 bucket, organized automatically by its Modality tag (e.g., /CT/...), while a structured JSON audit log is generated via loguru for observability.
 
 ## 💻 Getting Started
 
