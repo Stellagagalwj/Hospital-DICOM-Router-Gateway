@@ -133,8 +133,7 @@ Success Response (200 OK):
   "filename": "scan_001.dcm"
 }
 ```
-<img src="./docs/swagger.png" width="300" alt="DICOM Router UI">
-<img src="./docs/swagger2.png" width="300" alt="DICOM Router UI">
+<img src="./docs/swagger.png" width="400" alt="DICOM Router UI"> <img src="./docs/swagger2.png" width="400" alt="DICOM Response UI">
 
 ### 🧪 Testing
 The project uses pytest with extensive mocking (via unittest.mock) for cloud services to ensure tests run fast and remain isolated from actual network I/O or cloud costs.
@@ -143,7 +142,7 @@ pytest -v
 ```
 
 ## 🎯 End-to-End Result
-<img src="./docs/AWS1.png" width="600" alt="AWS S3 Result">
-<img src="./docs/AWS2.png" width="600" alt="AWS S3 Result">
+<img src="./docs/AWS1.png" width="800" alt="AWS S3 Result">
+<img src="./docs/AWS2.png" width="800" alt="AWS S3 Result">
 
 **Designed and engineered by Weijia Li**
