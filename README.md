@@ -145,4 +145,4 @@ pytest -v
 <img src="./docs/AWS1.png" width="800" alt="AWS S3 Result">
 <img src="./docs/AWS2.png" width="800" alt="AWS S3 Result">
 
-**Designed and engineered by Weijia Li**
+**Designed and engineered by Weijia Li.**
