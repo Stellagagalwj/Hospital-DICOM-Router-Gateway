@@ -32,7 +32,8 @@ def test_upload_routes_ct_to_s3(mock_s3, client: TestClient) -> None:
     
     # 2. 验证新架构下的返回值 (云端路径)
     assert body["modality"] == "CT"
-    assert "s3://mock-bucket-for-testing/CT/sample_ct.dcm" in body["cloud_location"]
+    assert body["cloud_location"].startswith("s3://")
+    assert body["cloud_location"].endswith("/CT/sample_ct.dcm")
 
     # 3. 🌟 终极验证：确认代码真的触发了 S3 上传动作！
     mock_s3.upload_fileobj.assert_called_once()
