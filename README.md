@@ -104,13 +104,13 @@ This project bridges the gap between raw clinical data and downstream AI pipelin
 ```mermaid
 graph LR
     %% 客户端层
-    subgraph Hospital Network
+    subgraph Hospital_Network ["Hospital Network"]
         CT[📸 CT Scanner] -->|POST .dcm| Gateway
         MRI[🩻 MRI Scanner] -->|POST .dcm| Gateway
     end
 
     %% 核心网关层 (Stateless & In-Memory)
-    subgraph DICOM Router Gateway (Stateless)
+    subgraph DICOM_Gateway ["DICOM Router Gateway (Stateless)"]
         Gateway{⚙️ FastAPI Router}
         MemoryBuf[🧠 In-Memory Buffer]
         DeID[🛡️ GDPR Redaction & Hash]
@@ -122,7 +122,7 @@ graph LR
     end
 
     %% 云端存储层
-    subgraph Cloud Infrastructure
+    subgraph Cloud_Storage ["Cloud Infrastructure"]
         DeID -->|boto3 Stream| AWS[(☁️ AWS S3 Vault)]
     end
 
@@ -180,11 +180,4 @@ curl -X 'POST' \
   -F 'file=@dummy_scan.dcm;type=application/dicom'
 ```
 
-## 🛣️ Future Roadmap (Next Steps)
-To further align with enterprise HealthTech standards, the following features are planned:
-- [ ] **AWS S3 Integration:** Replace local disk storage with AWS S3 buckets utilizing `boto3` for scalable cloud archiving.
-- [x] **De-identification Pipeline:** Implement automated PHI (Protected Health Information) stripping to ensure strict GDPR compliance before routing. *(Completed)*
-- [x] **CI/CD Pipeline & Containerization:** Set up GitHub Actions for automated testing, pytest execution, and Docker image management. *(Completed)*
-- [x] **Observability:** Integrate structured logging and basic metrics tracking.
----
 **Designed and engineered by Weijia Li**
