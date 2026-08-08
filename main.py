@@ -1,25 +1,36 @@
 import os
 import re
 import sys
+import io
 from pathlib import Path
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, Request
 from loguru import logger
 from redaction import redact_dicom 
 
+import boto3
+from botocore.exceptions import ClientError
+from dotenv import load_dotenv
+
+# --- ☁️ 环境与云端配置 ---
+load_dotenv()
+
+# 全局初始化 S3 客户端，让测试框架能够精准识别并 Mock 它
+AWS_BUCKET = os.getenv("S3_BUCKET_NAME", "default-bucket")
+s3_client = boto3.client(
+    's3',
+    region_name=os.getenv("AWS_REGION", "eu-north-1")
+)
+
 # --- 🚀 日志配置 (可观测性初始化) ---
-# 清除原生配置，强制让所有日志以 JSON 格式输出到标准输出流 (stdout)
-# 这样 Docker 容器或 AWS 极容易捕获并建立索引
 logger.remove()
 logger.add(sys.stdout, serialize=True, level="INFO")
 
 app = FastAPI(
-    title="PACS DICOM Router Gateway",
-    description="Enterprise-grade DICOM routing gateway with GDPR-compliant PHI redaction and Audit Trails.",
-    version="0.3.0",
+    title="PACS DICOM Router Gateway (Cloud Edition)",
+    description="Enterprise-grade DICOM routing gateway with GDPR redaction, Audit Trails, and S3 Integration.",
+    version="0.4.0",
 )
-
-DATA_ROOT = Path(os.environ.get("DICOM_DATA_ROOT", "./data"))
 
 def sanitize_modality(modality: str | None) -> str:
     if not modality or not modality.strip():
@@ -36,7 +47,7 @@ def sanitize_filename(filename: str) -> str:
 
 @app.on_event("startup")
 async def startup_event():
-    logger.info("PACS Gateway starting up. Audit trail enabled.")
+    logger.info("PACS Gateway (Cloud Edition) starting up. Audit trail enabled.")
 
 @app.get("/health")
 async def health_check() -> dict[str, str]:
@@ -50,7 +61,6 @@ async def upload_dicom(
     
     client_host = request.client.host if request.client else "unknown"
     
-    # 1. 基础接收日志
     logger.info("Incoming DICOM upload request", extra={"client_ip": client_host, "filename": file.filename})
 
     if not file.filename:
@@ -68,7 +78,7 @@ async def upload_dicom(
         logger.error("Upload rejected: Empty file", extra={"client_ip": client_host})
         raise HTTPException(status_code=400, detail="Uploaded file is empty")
 
-    # 2. 脱敏处理与异常日志
+    # 1. 脱敏处理
     try:
         sanitized = redact_dicom(content)
         logger.debug("DICOM PHI redacted successfully", extra={"filename": file.filename})
@@ -79,30 +89,39 @@ async def upload_dicom(
             detail=f"Failed to parse or redact DICOM file: {exc}",
         )
 
-    # 3. 路由归档与审计追踪日志
+    # 2. 准备 S3 云端路径
     modality = sanitize_modality(getattr(sanitized, "Modality", None))
-    target_dir = DATA_ROOT / modality
-    target_dir.mkdir(parents=True, exist_ok=True) 
+    safe_filename = sanitize_filename(file.filename)
+    s3_key = f"{modality}/{safe_filename}"  # 比如 CT/sample_ct.dcm
 
-    target_path = target_dir / sanitize_filename(file.filename)
-    sanitized.save_as(target_path)
+    # 3. ☁️ 内存直传 AWS S3 (不再保存到本地磁盘)
+    try:
+        dicom_buffer = io.BytesIO()
+        sanitized.save_as(dicom_buffer)
+        dicom_buffer.seek(0)
 
-    # 🌟 核心审计日志 (Audit Trail)
-    logger.info(
-        "DICOM successfully archived", 
-        extra={
-            "action": "ARCHIVE",
-            "modality": modality,
-            "sanitized_patient_id": sanitized.PatientID,
-            "file_size_kb": round(file_size_kb, 2),
-            "destination": str(target_path)
-        }
-    )
+        s3_client.upload_fileobj(dicom_buffer, AWS_BUCKET, s3_key)
+        
+        # S3 上传成功的审计日志
+        logger.info(
+            "DICOM securely archived to AWS S3", 
+            extra={
+                "action": "CLOUD_ARCHIVE",
+                "modality": modality,
+                "sanitized_patient_id": sanitized.PatientID,
+                "s3_bucket": AWS_BUCKET,
+                "s3_key": s3_key,
+                "file_size_kb": round(file_size_kb, 2)
+            }
+        )
+    except ClientError as e:
+        logger.error("AWS S3 Upload Failed", extra={"error": str(e), "s3_key": s3_key})
+        raise HTTPException(status_code=500, detail="Internal Cloud Storage Error")
 
     return {
-        "message": "DICOM file sanitized and archived successfully",
+        "message": "DICOM file sanitized and securely routed to Cloud",
         "modality": modality,
         "sanitized_patient_id": sanitized.PatientID,
-        "path": str(target_path),
+        "cloud_location": f"s3://{AWS_BUCKET}/{s3_key}",
         "filename": file.filename,
     }

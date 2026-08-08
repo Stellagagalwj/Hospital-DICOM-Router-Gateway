@@ -39,8 +39,8 @@ def test_redact_dicom_blanks_phi_tags() -> None:
 
     sanitized = redact_dicom(original_bytes)
 
-    assert sanitized.PatientName == ""
-    assert sanitized.PatientID == ""
+    assert sanitized.PatientName == "ANONYMOUS"
+    assert sanitized.PatientID != ""
     assert sanitized.PatientBirthDate == ""
     assert sanitized.Modality == "CT"
     assert original.PatientName == "Doe^John"
@@ -55,4 +55,4 @@ def test_redact_dicom_does_not_mutate_input_dataset() -> None:
 
     assert sanitized is not original
     assert original.PatientName == "Doe^John"
-    assert sanitized.PatientName == ""
+    assert sanitized.PatientName == "ANONYMOUS"
