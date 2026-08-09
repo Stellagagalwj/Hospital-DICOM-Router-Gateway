@@ -1,0 +1,11 @@
+# 绝对不能进镜像的机密文件
+.env
+
+# 不需要进镜像的本地开发文件
+.git
+.gitignore
+__pycache__/
+*.pyc
+.venv/
+data/
+tests/
